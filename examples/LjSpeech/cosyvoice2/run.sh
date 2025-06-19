@@ -107,7 +107,7 @@ if [ ${stage} -le 5 ] && [ ${stop_stage} -ge 5 ]; then
   echo "Run train. We only support llm training for now. If you want to train from scratch, please use conf/cosyvoice.fromscratch.yaml"
   
   if [ $train_engine == 'deepspeed' ]; then
-	  echo "Notice deepspeed has its own optimizer config. Modify conf/ds_stage2.json if necessary"
+      echo "Notice deepspeed has its own optimizer config. Modify conf/ds_stage2.json if necessary"
   fi
   for model in llm flow; do
     torchrun --nnodes=1 --nproc_per_node=$num_gpus \
