@@ -46,7 +46,7 @@ git clone https://www.modelscope.cn/iic/CosyVoice2-0.5B.git pretrained_models/Co
 
 ### Reemplazado de dataset
 
-Por tiempo, decidí descargar la url "https://www.kaggle.com/datasets/mathurinache/the-lj-speech-dataset" y eliminar la parte de descargado automático de dataset. 
+Por tiempo, decidí descargar el dataset de la url "https://www.kaggle.com/datasets/mathurinache/the-lj-speech-dataset" y eliminar la parte de descargado automático del run.sh. 
 El script para entrenar y para inferencia está en `examples/LjSpeech/cosyvoice2/run.sh`. En esta carpeta, una carpeta "dataset" creada manualmente contiene el dataset LjSpeech descomprimido.
 
 Para correr el run.sh, se utilizó 
