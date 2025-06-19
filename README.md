@@ -56,3 +56,5 @@ bash run.sh
 ```
 
 y por cuestiones de tiempo, se hardcodeó que inicie en el stage 0 y termine en el 5 (entrenamiento).
+
+Múltiples partes del "run.sh" fueron modificadas para poder leer y preprocesar el nuevo dataset debido a su estructura diferente. 
