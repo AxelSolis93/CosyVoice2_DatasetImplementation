@@ -1,6 +1,6 @@
 # CosyVoice2_Implementation
  
-Implementación de CosyVoice2, cambiando el dataset por el de LjSpeech. 
+Implementación de CosyVoice2, entrenando con el dataset "LjSpeech". 
 
 
 - Clone the repo
