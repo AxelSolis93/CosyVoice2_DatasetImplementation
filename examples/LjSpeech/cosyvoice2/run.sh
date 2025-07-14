@@ -4,12 +4,13 @@
 
 export PYTHONPATH=$(realpath ../../../):$(realpath ../../../third_party/Matcha-TTS/):$PYTHONPATH
 
-stage=1
+stage=5
 stop_stage=5
 
 data_url=www.openslr.org/resources/60
 data_dir=./dataset
 pretrained_model_dir=../../../pretrained_models/CosyVoice2-0.5B
+#pretrained_model_dir=../../../pretrained_models/trained
 
 x=LJSpeech-1.1
 
@@ -65,9 +66,12 @@ if [ ${stage} -le 4 ] && [ ${stop_stage} -ge 4 ]; then
       --tts_text `pwd`/tts_text.json \
       --qwen_pretrain_path $pretrained_model_dir/CosyVoice-BlankEN \
       --llm_model $pretrained_model_dir/llm.pt \
-      --flow_model $pretrained_model_dir/flow.pt \
-      --hifigan_model $pretrained_model_dir/hift.pt \
-      --result_dir `pwd`/exp/cosyvoice/LJSpeech-1.1/$mode
+	  --flow_model $pretrained_model_dir/flow.pt \
+	  --hifigan_model $pretrained_model_dir/hift.pt \
+	  --result_dir `pwd`/exp/cosyvoice/LJSpeech-1.1/$mode
+	  #--flow_model "" \
+	  #--llm_model "" \  
+      #--hifigan_model "" \
   done
 fi
 
@@ -107,9 +111,9 @@ if [ ${stage} -le 5 ] && [ ${stop_stage} -ge 5 ]; then
   echo "Run train. We only support llm training for now. If you want to train from scratch, please use conf/cosyvoice.fromscratch.yaml"
   
   if [ $train_engine == 'deepspeed' ]; then
-      echo "Notice deepspeed has its own optimizer config. Modify conf/ds_stage2.json if necessary"
+	  echo "Notice deepspeed has its own optimizer config. Modify conf/ds_stage2.json if necessary"
   fi
-  for model in llm flow; do
+  for model in llm flow hifigan; do
     torchrun --nnodes=1 --nproc_per_node=$num_gpus \
         --rdzv_id=$job_id --rdzv_backend="c10d" --rdzv_endpoint="localhost:1234" \
       ../../../cosyvoice/bin/train.py \
@@ -136,11 +140,11 @@ fi
 average_num=5
 if [ ${stage} -le 6 ] && [ ${stop_stage} -ge 6 ]; then
   for model in llm flow hifigan; do
-    decode_checkpoint=`pwd`/exp/cosyvoice/$model/$train_engine/${model}.pt
+    decode_checkpoint=`pwd`/exp/cosyvoice2/$model/$train_engine/${model}.pt
     echo "do model average and final checkpoint is $decode_checkpoint"
-    python cosyvoice/bin/average_model.py \
+    python ../../../cosyvoice/bin/average_model.py \
       --dst_model $decode_checkpoint \
-      --src_path `pwd`/exp/cosyvoice/$model/$train_engine  \
+      --src_path `pwd`/exp/cosyvoice2/$model/$train_engine  \
       --num ${average_num} \
       --val_best
   done
@@ -148,6 +152,6 @@ fi
 
 if [ ${stage} -le 7 ] && [ ${stop_stage} -ge 7 ]; then
   echo "Export your model for inference speedup. Remember copy your llm or flow model to model_dir"
-  python cosyvoice/bin/export_jit.py --model_dir $pretrained_model_dir
-  python cosyvoice/bin/export_onnx.py --model_dir $pretrained_model_dir
+  python ../../../cosyvoice/bin/export_jit.py --model_dir $pretrained_model_dir
+  python ../../../cosyvoice/bin/export_onnx.py --model_dir $pretrained_model_dir
 fi
