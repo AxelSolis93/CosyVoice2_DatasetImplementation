@@ -14,8 +14,32 @@ pretrained_model_dir=../../../pretrained_models/CosyVoice2-0.5B
 
 x=LJSpeech-1.1
 
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    --stage)
+      stage="$2"
+      shift 2
+      ;;
+    --stop_stage)
+      stop_stage="$2"
+      shift 2
+      ;;
+    *)
+      echo "Argumento desconocido: $1"
+      shift
+      ;;
+  esac
+done
+
+echo "Ejecutando desde stage $stage hasta $stop_stage"
+
+
 if [ ${stage} -le -1 ] && [ ${stop_stage} -ge -1 ]; then
   echo "Data Download"
+  echo "Data Download for LJSpeech"
+  # Se llama al script una sola vez, pasándole solo el directorio de datos.
+  # El script que creamos antes ya sabe qué URL y archivo descargar.
+  local/download_and_untar.sh ${data_dir}
   part=LJSpeech-1.1
 fi
 
@@ -113,7 +137,7 @@ if [ ${stage} -le 5 ] && [ ${stop_stage} -ge 5 ]; then
   if [ $train_engine == 'deepspeed' ]; then
 	  echo "Notice deepspeed has its own optimizer config. Modify conf/ds_stage2.json if necessary"
   fi
-  for model in llm flow hifigan; do
+  for model in hifigan; do
     torchrun --nnodes=1 --nproc_per_node=$num_gpus \
         --rdzv_id=$job_id --rdzv_backend="c10d" --rdzv_endpoint="localhost:1234" \
       ../../../cosyvoice/bin/train.py \
