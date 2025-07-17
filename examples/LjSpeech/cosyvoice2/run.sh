@@ -12,6 +12,8 @@ data_dir=./dataset
 pretrained_model_dir=../../../pretrained_models/CosyVoice2-0.5B
 #pretrained_model_dir=../../../pretrained_models/trained
 
+random_seed=42  # Random seed for dataset reduction
+
 x=LJSpeech-1.1
 
 while [[ $# -gt 0 ]]; do
@@ -40,8 +42,10 @@ if [ ${stage} -le -1 ] && [ ${stop_stage} -ge -1 ]; then
   mkdir -p ${data_dir}
   # Se llama al script una sola vez, pasándole solo el directorio de datos.
   # El script que creamos antes ya sabe qué URL y archivo descargar.
-  local/download_and_untar.sh ${data_dir} https://data.keithito.com/data/speech/LJSpeech-1.1.tar.bz2 LJSpeech-1.1
-  
+  local/download_and_untar.sh --remove-archive ${data_dir} https://data.keithito.com/data/speech/LJSpeech-1.1.tar.bz2 LJSpeech-1.1
+  # Reduce dataset to 1/3 of original size
+  echo "Reducing LJSpeech dataset to 1/3 of original size..."
+   python local/reduce_ljspeech.py ${data_dir}/${x} ${random_seed}
   part=LJSpeech-1.1
 fi
 
