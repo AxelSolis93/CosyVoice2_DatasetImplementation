@@ -37,9 +37,11 @@ echo "Ejecutando desde stage $stage hasta $stop_stage"
 if [ ${stage} -le -1 ] && [ ${stop_stage} -ge -1 ]; then
   echo "Data Download"
   echo "Data Download for LJSpeech"
+  mkdir -p ${data_dir}
   # Se llama al script una sola vez, pasándole solo el directorio de datos.
   # El script que creamos antes ya sabe qué URL y archivo descargar.
-  local/download_and_untar.sh ${data_dir}
+  local/download_and_untar.sh ${data_dir} https://data.keithito.com/data/speech/LJSpeech-1.1.tar.bz2 LJSpeech-1.1
+  
   part=LJSpeech-1.1
 fi
 
