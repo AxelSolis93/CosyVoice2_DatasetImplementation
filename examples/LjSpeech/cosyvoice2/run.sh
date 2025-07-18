@@ -36,17 +36,22 @@ done
 echo "Ejecutando desde stage $stage hasta $stop_stage"
 
 
-if [ ${stage} -le -1 ] && [ ${stop_stage} -ge -1 ]; then
+if [ ${stage} -le -2 ] && [ ${stop_stage} -ge -2 ]; then
   echo "Data Download"
   echo "Data Download for LJSpeech"
   mkdir -p ${data_dir}
   # Se llama al script una sola vez, pasándole solo el directorio de datos.
   # El script que creamos antes ya sabe qué URL y archivo descargar.
   local/download_and_untar.sh --remove-archive ${data_dir} https://data.keithito.com/data/speech/LJSpeech-1.1.tar.bz2 LJSpeech-1.1
+  
+  part=LJSpeech-1.1
+fi
+
+
+if [ ${stage} -le -1 ] && [ ${stop_stage} -ge -1 ]; then
   # Reduce dataset to 1/3 of original size
   echo "Reducing LJSpeech dataset to 1/3 of original size..."
-   python local/reduce_ljspeech.py ${data_dir}/${x} ${random_seed}
-  part=LJSpeech-1.1
+   python ./local/reduce_ljspeech.py reduce ${data_dir}/${x} ${random_seed}
 fi
 
 if [ ${stage} -le 0 ] && [ ${stop_stage} -ge 0 ]; then
@@ -81,18 +86,47 @@ if [ ${stage} -le 3 ] && [ ${stop_stage} -ge 3 ]; then
   
 fi
 
-# inference
+#Prepare dataset for Inference
+if [ ${stage} -le 41 ] && [ ${stop_stage} -ge 41 ]; then
+  echo "Data preparation for LJSpeech inference: prepare wav.scp/text/utt2spk/spk2utt"
+  inference_dataset="LJSpeech-1.1-inference"
+  
+  # Check if inference source directory exists
+  if [ ! -d "$data_dir/$inference_dataset" ]; then
+    echo "Error: Inference source directory not found at $data_dir/$inference_dataset"
+    echo "Please run stage -1 first to create the inference dataset"
+    exit 1
+  fi
+  
+  mkdir -p data/$inference_dataset
+  python ./local/prepare_data.py --src_dir $data_dir/$inference_dataset --des_dir data/$inference_dataset
+  
+  echo "Extract campplus speaker embedding, you will get spk2embedding.pt and utt2embedding.pt in data/$inference_dataset dir"
+  ../../../tools/extract_embedding.py --dir data/$inference_dataset \
+  --onnx_path $pretrained_model_dir/campplus.onnx
+  
+  echo "Extract discrete speech token, you will get utt2speech_token.pt in data/$inference_dataset dir"
+  ../../../tools/extract_speech_token.py --dir data/$inference_dataset \
+  --onnx_path $pretrained_model_dir/speech_tokenizer_v2.onnx
+  
+  echo "Prepare required parquet format data, you should have prepared wav.scp/text/utt2spk/spk2utt/utt2embedding.pt/spk2embedding.pt/utt2speech_token.pt"
+  mkdir -p data/$inference_dataset/parquet
+  ../../../tools/make_parquet_list.py --num_utts_per_parquet 1000 \
+    --num_processes 10 \
+    --src_dir data/$inference_dataset \
+    --des_dir data/$inference_dataset/parquet
+fi
 
 # inference
-if [ ${stage} -le 4 ] && [ ${stop_stage} -ge 4 ]; then
+if [ ${stage} -le 42 ] && [ ${stop_stage} -ge 42 ]; then
   echo "Run inference. Please make sure utt in tts_text is in prompt_data"
   # TODO consider remove bin/inference.py, or use similar initilization method as in readme
   for mode in sft zero_shot; do
     python ../../../cosyvoice/bin/inference.py --mode $mode \
       --gpu 0 \
       --config conf/cosyvoice2.yaml \
-      --prompt_data data/LJSpeech-1.1/parquet/data.list \
-      --prompt_utt2data data/LJSpeech-1.1/parquet/utt2data.list \
+      --prompt_data data/LJSpeech-1.1-inference/parquet/data.list \
+		--prompt_utt2data data/LJSpeech-1.1-inference/parquet/utt2data.list \
       --tts_text `pwd`/tts_text.json \
       --qwen_pretrain_path $pretrained_model_dir/CosyVoice-BlankEN \
       --llm_model $pretrained_model_dir/llm.pt \
@@ -169,7 +203,7 @@ fi
 # average model
 average_num=5
 if [ ${stage} -le 6 ] && [ ${stop_stage} -ge 6 ]; then
-  for model in llm flow hifigan; do
+  for model in llm flow; do
     decode_checkpoint=`pwd`/exp/cosyvoice2/$model/$train_engine/${model}.pt
     echo "do model average and final checkpoint is $decode_checkpoint"
     python ../../../cosyvoice/bin/average_model.py \
