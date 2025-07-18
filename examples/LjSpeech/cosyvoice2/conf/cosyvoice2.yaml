@@ -210,7 +210,7 @@ train_conf:
         lr: 1e-5 # change to 1e-5 during sft
     scheduler: constantlr # change to constantlr during sft
     scheduler_conf:
-        warmup_steps: 2500
+        warmup_steps: 500
     max_epoch: 10
     grad_clip: 5
     accum_grad: 2
