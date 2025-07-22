@@ -46,15 +46,12 @@ git clone https://www.modelscope.cn/iic/CosyVoice2-0.5B.git pretrained_models/Co
 
 ### Reemplazado de dataset
 
-Por tiempo, decidí descargar el dataset de la url "https://www.kaggle.com/datasets/mathurinache/the-lj-speech-dataset" y eliminar la parte de descargado automático del run.sh. 
-El script para entrenar y para inferencia está en `examples/LjSpeech/cosyvoice2/run.sh`. En esta carpeta, una carpeta "dataset" creada manualmente contiene el dataset LjSpeech descomprimido.
+El stage -2 se encarga de descargar la base de datos nueva LjSpeech, el stage -1 se encarga de dividir el dataset a un tercio de su tamaño y a generar una carpeta para inferencias con 100 samples. La parte dividida del dataset se escoge aleatoriamente y tiene una semilla por defecto de 42.
 
 Para correr el run.sh, se utilizó 
 
 ``` sh
-bash run.sh
+ bash run.sh --stage -2 --stop_stage -1
 ```
+permitiendo colocar los stages como parámetros en la consola. Para preparar los datos se deben correr los stages del 0 al 3, las inferencias son el 41 y 42, y el proceso de entrenamiento es del stage 5 al 6, con el stage 7 como opcional si se quiere exportar el modelo para facilitar inferencias.
 
-y por cuestiones de tiempo, se hardcodeó que inicie en el stage 0 y termine en el 5 (entrenamiento).
-
-Múltiples partes de run.sh fueron modificadas para poder leer y preprocesar el nuevo dataset debido a su estructura diferente. 
