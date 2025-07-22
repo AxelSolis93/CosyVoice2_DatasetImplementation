@@ -55,3 +55,5 @@ Para correr el run.sh, se utilizó
 ```
 permitiendo colocar los stages como parámetros en la consola. Para preparar los datos se deben correr los stages del 0 al 3, las inferencias son el 41 y 42, y el proceso de entrenamiento es del stage 5 al 6, con el stage 7 como opcional si se quiere exportar el modelo para facilitar inferencias.
 
+"https://colab.research.google.com/drive/12BrcQ-l_LFb9419c0Zt-lCd9Xe4c6-3B?usp=sharing" está preparado para entrenar un modelo en Cosyvoice2 usando un tercio de la base de datos LjSpeech y usarlo para generar 100 inferencias, permitiendo guardar los modelos .pt y las inferencias en Drive. La implementación del discriminador WavLM dio error al final así que decidí dejar un código funcional y no uno incompleto y con errores.
+
